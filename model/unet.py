@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-def get_time_embedding(time_steps, temb_dim):
+def get_time_embedding(time_steps, t_emb_dim):
     """Generates a sinusoidal time embedding for a given set of time steps, inspired from Transformer.
     This function converts a 1D tensor of time steps into a higher-dimensional
     embedding using sinusoidal functions. Each timestep will have different embedding. 
@@ -18,14 +18,99 @@ def get_time_embedding(time_steps, temb_dim):
     Raises:
         AssertionError: If `temb_dim` is not divisible by 2."""
     
-    assert temb_dim % 2 == 0, "time embedding dimension must be divisible by 2"
+    assert t_emb_dim % 2 == 0, "time embedding dimension must be divisible by 2"
     
     # factor = 10000^(2i/d_model)
-    factor = 10000 ** ((2 * torch.arange(start=0, end=temb_dim // 2, dtype=torch.float32, device=time_steps.device) / (temb_dim)))
-    t_emb = torch.zeros(time_steps.size(0), temb_dim, device=time_steps.device)
+    factor = 10000 ** ((2 * torch.arange(start=0, end=t_emb_dim // 2, dtype=torch.float32, device=time_steps.device) / (t_emb_dim)))
+    t_emb = torch.zeros(time_steps.size(0), t_emb_dim, device=time_steps.device)
     # pos / factor
     # timesteps B -> B, 1 -> B, temb_dim
     inner = time_steps[:, None].float() / factor
     t_emb[:, 0::2] = torch.sin(inner)
     t_emb[:, 1::2] = torch.cos(inner)
     return t_emb
+
+
+class DownBlock(nn.Module):
+    """
+    Down block include:
+    1. (Normalization + SiLU + Conv) + Time projection + (Normalization + SiLU + Conv)
+    2. Normalization + Self-Attention
+    3. Down sample
+    """
+    def __init__(self, in_channels, out_channels, t_emb_dim, down_sample=True, num_heads=4, num_layers=1, dropout=0.1):
+        super().__init__()
+        self.num_layers = num_layers
+        self.down_sample = down_sample
+        self.res_conv_block_1 = nn.ModuleList([
+            nn.Sequential(
+                # Normalize for each channel of each instance in a batch
+                nn.GroupNorm(num_groups=(in_channels if i == 0 else out_channels), num_channels=(in_channels if i == 0 else out_channels)),
+                nn.SiLU(),
+                # (batch, c, h, w) --> (batch, c, h, w)
+                nn.Conv2d(in_channels=(in_channels if i == 0 else out_channels), out_channels=out_channels,
+                          kernel_size=3, stride=1, padding=1),
+                nn.Dropout(dropout)
+            ) for i in range(num_layers)
+        ])
+        self.time_projection = nn.ModuleList([
+            nn.Sequential(
+                nn.SiLU(),
+                # (batch, t_emb_dim) --> (batch, out_channels)
+                nn.Linear(t_emb_dim, out_channels),
+            ) for _ in range(num_layers)
+        ])
+        self.res_conv_block_2 = nn.ModuleList([
+            nn.Sequential(
+                nn.GroupNorm(num_groups=out_channels, num_channels=out_channels),
+                nn.SiLU(),
+                nn.Conv2d(in_channels=out_channels, out_channels=out_channels,
+                          kernel_size=3, stride=1, padding=1),
+                nn.Dropout(dropout)
+            ) for _ in range(num_layers)
+        ])
+        self.attention_norm = nn.ModuleList([
+            nn.GroupNorm(num_groups=out_channels, num_channels=out_channels)
+            for _ in range(num_layers)
+        ])
+        self.multihead_attention = nn.ModuleList([
+            # Compute attention score for each element of (h=i, w=j) with feature_nums = c
+            nn.MultiheadAttention(embed_dim=out_channels, num_heads=num_heads, dropout=dropout, batch_first=True)
+            for _ in range(num_layers)
+        ])
+        self.input_projection = nn.Conv2d(in_channels, out_channels, kernel_size=1)
+        self.down_sample = nn.Conv2d(out_channels, out_channels, 2, 2) if self.down_sample else nn.Identity()
+
+    def forward(self, x, t_emb):
+        # (batch, c_in, h, w)
+        out = x
+        for i in range(self.num_layers):
+            # (batch, c_in, h, w)
+            input_res = out
+            # (batch, c_in, h, w) --> (batch, c_out, h, w)
+            out = self.res_conv_block_1[i](out)
+            # (batch, c_out, h, w) + (batch, c_out) --> (batch, c_out, h, w)
+            out = out + self.time_projection[i](t_emb)[:, :, None, None] # broadcast
+            # (batch, c_out, h, w) --> (batch, c_out, h, w)
+            out = self.res_conv_block_2[i](out)
+            if i == 0:
+                # (batch, c_out, h, w) --> (batch, c_out, h, w)
+                out = out + self.input_projection(input_res)
+            else:
+                out = out + input_res
+
+            batch, channels, h, w = out.shape
+            input_attn = out
+            # (batch, c_out, h, w) --> (batch, c_out, h, w)
+            out = self.attention_norm[i](out)
+            # (batch, c_out, h, w) --> (batch, c_out, h * w) --> (batch, h * w, c_out)
+            out = out.reshape(batch, channels, h * w).transpose(1, 2)
+            # (batch, h * w, c_out) --> (batch, h * w, c_out)
+            out, _ = self.multihead_attention[i](out, out, out)
+            # (batch, h * w, c_cout) --> (batch, c_out, h * w) --> (batch, c_out, h, w)
+            out = out.transpose(1, 2).reshape(batch, channels, h, w)
+            out = out + input_attn
+        
+        # (batch, c_out, h, w) --> (batch, c_out, h / 2, w / 2)
+        out = self.down_sample(out)
+        return out
