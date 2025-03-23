@@ -346,8 +346,44 @@ class Unet(nn.Module):
             
         self.ups = nn.ModuleList([])
         for i in reversed(range(len(self.down_channels) - 1)):
-            self.ups.append([UpBlock(in_channels=self.down_channels[i] * 2, out_channels=self.down_channels[i - 1] if i != 0 else (self.down_channels[i] // 2), t_emb_dim=self.time_emb_dim, 
-                                     up_sample=self.down_sample[i], num_heads=self.num_heads, num_layers=self.num_up_layers, dropout=self.dropout)])
+            self.ups.append(UpBlock(in_channels=self.down_channels[i] * 2, out_channels=self.down_channels[i - 1] if i != 0 else (self.down_channels[i] // 2), t_emb_dim=self.time_emb_dim, 
+                                     up_sample=self.down_sample[i], num_heads=self.num_heads, num_layers=self.num_up_layers, dropout=self.dropout))
             
         self.out_norm = nn.GroupNorm(self.down_channels[0] // 2, self.down_channels[0] // 2)
         self.conv_out = nn.Conv2d(self.down_channels[0] // 2, self.im_channels, kernel_size=3, padding=1)
+
+    def forward(self, x, t):
+        # Assuming original image is (B, C0, H, W) 
+        # Shapes assuming downblocks are [C1, C2, C3, C4]
+        # Shapes assuming midblocks are [C4, C4, C3]
+        # Shapes assuming downsamples are [True, True, False]
+
+        # (B, C0, H, W) --> (B, C1, H, W)
+        out = self.conv_in(x)
+
+        # (B, ) --> (B, time_emb_dim)
+        t_emb = get_time_embedding(t, self.time_emb_dim)
+        # (B, time_emb_dim) --> (B, time_emb_dim)
+        t_emb = self.time_projection(t_emb)
+
+        # down_outs = [(B, C1, H, W), (B, C2, H/2, W/2), (B, C3, H/4, W/4)]
+        # out = (B, C4, H/4, W/4)
+        down_outs = []
+        for down in self.downs:
+            down_outs.append(out)
+            out = down(out, t_emb)
+
+        # out = (B, C3, H/4, W/4)
+        for mid in self.mids:
+            out = mid(out, t_emb)
+
+        # out = (B, C1/2, H, W)
+        for up in self.ups:
+            out = up(out, down_outs.pop(), t_emb)
+
+        # (B, C1/2, H, W) -- > (B, C1/2, H, W)
+        out = self.out_norm(out)
+        out = nn.SiLU()(out)
+        # (B, C1/2, H, W) --> (B, C0, H, W)
+        out = self.conv_out(out)
+        return out
