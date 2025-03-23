@@ -310,3 +310,44 @@ class UpBlock(nn.Module):
             out = out + input_attn
         
         return out
+
+
+class Unet(nn.Module):
+    def __init__(self, model_config):
+        super().__init__()
+        self.im_channels = model_config['im_channels']
+        self.down_channels = model_config['down_channels']
+        self.mid_channels = model_config['mid_channels']
+        self.down_sample = model_config['down_sample']
+        self.time_emb_dim = model_config['time_emb_dim']
+        self.num_down_layers = model_config['num_down_layers']
+        self.num_mid_layers = model_config['num_mid_layers']
+        self.num_up_layers = model_config['num_up_layers']
+        self.dropout = model_config['dropout']
+        self.num_heads = model_config['num_heads']
+
+        assert self.mid_channels[0] == self.down_channels[-1]
+        assert self.mid_channels[-1] == self.down_channels[-2]
+        assert len(self.down_sample) == len(self.down_channels) - 1
+
+        self.time_projection = nn.Linear(self.time_emb_dim, self.time_emb_dim)
+        self.up_sample = list(reversed(self.down_sample))
+        self.conv_in = nn.Conv2d(self.im_channels, self.down_channels[0], kernel_size=3, padding=1)
+
+        self.downs = nn.ModuleList([])
+        for i in range(len(self.down_channels) - 1):
+            self.downs.append(DownBlock(in_channels=self.down_channels[i], out_channels=self.down_channels[i + 1], t_emb_dim=self.time_emb_dim,
+                                        down_sample=self.down_sample[i], num_heads=self.num_heads, num_layers=self.num_down_layers, dropout=self.dropout))
+            
+        self.mids = nn.ModuleList([])
+        for i in range(len(self.mid_channels) - 1):
+            self.mids.append(MidBlock(in_channels=self.mid_channels[i], out_channels=self.mid_channels[i + 1], t_emb_dim=self.time_emb_dim, 
+                                      num_heads=self.num_heads, num_layers=self.num_mid_layers, dropout=self.dropout))
+            
+        self.ups = nn.ModuleList([])
+        for i in reversed(range(len(self.down_channels) - 1)):
+            self.ups.append([UpBlock(in_channels=self.down_channels[i] * 2, out_channels=self.down_channels[i - 1] if i != 0 else (self.down_channels[i] // 2), t_emb_dim=self.time_emb_dim, 
+                                     up_sample=self.down_sample[i], num_heads=self.num_heads, num_layers=self.num_up_layers, dropout=self.dropout)])
+            
+        self.out_norm = nn.GroupNorm(self.down_channels[0] // 2, self.down_channels[0] // 2)
+        self.conv_out = nn.Conv2d(self.down_channels[0] // 2, self.im_channels, kernel_size=3, padding=1)
