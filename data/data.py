@@ -1,21 +1,18 @@
-import torch
-import torchvision
 import os
-import matplotlib.pyplot as plt
-from torch.utils.data.dataloader import DataLoader
-from torch.utils.data.dataset import Dataset
+import torch
+from torch.utils.data import Dataset
 from PIL import Image
 
 class StanfordCarDataset(Dataset):
     def __init__(self, root, transform=None):
         self.root = root
         self.transform = transform
-        
-        test_images = os.listdir("/kaggle/input/stanford-cars-dataset/cars_test/cars_test")
-        test_images = [os.path.join("cars_test/cars_test", i) for i in test_images]
-        
-        train_images = os.listdir("/kaggle/input/stanford-cars-dataset/cars_train/cars_train")
-        train_images = [os.path.join("cars_train/cars_train", i) for i in train_images]
+
+        test_dir = os.path.join(root, "cars_test/cars_test")
+        train_dir = os.path.join(root, "cars_train/cars_train")
+
+        test_images = [os.path.join(test_dir, img) for img in os.listdir(test_dir)]
+        train_images = [os.path.join(train_dir, img) for img in os.listdir(train_dir)]
         
         self.images = test_images + train_images
 
@@ -23,9 +20,7 @@ class StanfordCarDataset(Dataset):
         return len(self.images)
 
     def __getitem__(self, idx):
-        im_path = os.path.join(self.root, self.images[idx])
-        image = Image.open(im_path).convert('RGB')
-        
+        image = Image.open(self.images[idx]).convert('RGB')
         if self.transform:
             image = self.transform(image)
         return image
