@@ -12,10 +12,8 @@ from torch.optim import Adam
 import torchvision.transforms as transforms
 
 
-
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
 def train(args):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     with open(args.config_path, 'r') as file:
         try:
             config = yaml.safe_load(file)
