@@ -28,4 +28,6 @@ train_params:
   num_samples : 100
   num_grid_rows : 10
   lr: 0.001
-  ckpt_name: 'ddpm_ckpt.pth'
+  saved_ckpt_name: 'ddpm_ckpt.pth'
+  load_ckpt_path: 'ddpm_ckpt.pth'
+  save_every: 5
