@@ -1,5 +1,7 @@
 dataset_params:
-  im_path: 'data/train/images'
+  root: '/kaggle/input/stanford-cars-dataset'
+  train: 'cars_train/cars_train'
+  test: 'cars_test/cars_test'
 
 diffusion_params:
   num_timesteps : 1000
