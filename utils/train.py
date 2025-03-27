@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 from model.unet import Unet
 from torch.optim import Adam
 import torchvision.transforms as transforms
+from utils.override_args import override_config
 
 
 def train(args):
@@ -19,23 +20,8 @@ def train(args):
             config = yaml.safe_load(file)
         except yaml.YAMLError as exc:
             print(exc)
-
-    # override params for training
-    if args.batch_size:
-        config['train_params']['batch_size'] = args.batch_size
-    if args.num_epochs:
-        config['train_params']['num_epochs'] = args.num_epochs
-    if args.lr:
-        config['train_params']['lr'] = args.lr
-    if args.task_name:
-        config['train_params']['task_name'] = args.task_name
-    if args.saved_ckpt_name:
-        config['train_params']['saved_ckpt_name'] = args.saved_ckpt_name
-    if args.load_ckpt_path:
-        config['train_params']['load_ckpt_path'] = args.load_ckpt_path
-    if args.save_every:
-        config['train_params']['save_every'] = args.save_every
     
+    config = override_config(config, args, True)
     print(config)
     ########################################
 
@@ -113,6 +99,20 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Arguments for ddpm training")
     parser.add_argument("--config", dest='config_path', type=str, default="config/config.yaml", 
                         help="Path to config file (default: config/config.yaml)")
+    # params for dataset
+    parser.add_argument("--root_dir", dest='root_dir', type=str, help="Root directory of dataset")
+    parser.add_argument("--train_dir", dest='train_dir', type=str, help="Training directory of dataset")
+    parser.add_argument("--test_dir", dest='test_dir', type=str, help="Testing directory of dataset")
+    # params for diffusion
+    parser.add_argument("--num_timesteps", dest='num_timesteps', type=int, help="Number of timesteps for diffusion")
+    parser.add_argument("--beta_start", dest='beta_start', type=float, help="Beta start for diffusion")
+    parser.add_argument("--beta_end", dest='beta_end', type=float, help="Beta end for diffusion")
+    # params for model
+    parser.add_argument("--im_channels", dest='im_channels', type=int, help="Number of image channels")
+    parser.add_argument("--im_size", dest='im_size', type=int, help="Size of image")
+    parser.add_argument("--time_emb_dim", dest='time_emb_dim', type=int, help="Time embedding dimension")
+    parser.add_argument("--num_heads", dest='num_heads', type=int, help="Number of attention heads")
+    parser.add_argument("--dropout", dest='dropout', type=float, help="Dropout rate for model")
     # params for training
     parser.add_argument("--task_name", dest='task_name', type=str, help="Name of the task")
     parser.add_argument("--batch_size", dest='batch_size', type=int, help="Batch size for training")

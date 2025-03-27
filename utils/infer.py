@@ -7,6 +7,7 @@ from torchvision.utils import make_grid
 from tqdm import tqdm
 from model.unet import Unet
 from scheduler.linear_scheduler import LinearNoiseScheduler
+from utils.override_args import override_config
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -45,6 +46,7 @@ def infer(args):
         except yaml.YAMLError as exc:
             print(exc)
 
+    config = override_config(config, args)
     print(config)
     ###############################################
 
@@ -70,5 +72,21 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Arguments for ddpm image generation')
     parser.add_argument('--config', dest='config_path',
                         default='config/default.yaml', type=str)
+     # params for diffusion
+    parser.add_argument("--num_timesteps", dest='num_timesteps', type=int, help="Number of timesteps for diffusion")
+    parser.add_argument("--beta_start", dest='beta_start', type=float, help="Beta start for diffusion")
+    parser.add_argument("--beta_end", dest='beta_end', type=float, help="Beta end for diffusion")
+    # params for model
+    parser.add_argument("--im_channels", dest='im_channels', type=int, help="Number of image channels")
+    parser.add_argument("--im_size", dest='im_size', type=int, help="Size of image")
+    parser.add_argument("--time_emb_dim", dest='time_emb_dim', type=int, help="Time embedding dimension")
+    parser.add_argument("--num_heads", dest='num_heads', type=int, help="Number of attention heads")
+    parser.add_argument("--dropout", dest='dropout', type=float, help="Dropout rate for model")
+    # params for inference
+    parser.add_argument("--task_name", dest='task_name', type=str, help="Name of the task")
+    parser.add_argument("--num_samples", dest='num_samples', type=int, help="Number of samples to generate")
+    parser.add_argument("--load_ckpt_path", dest='load_ckpt_path', type=str, help="Path to load checkpoint")
+    parser.add_argument("--num_grid_rows", dest='num_grid_rows', type=int, help="Number of grid rows for samples")
+
     args = parser.parse_args()
     infer(args)
