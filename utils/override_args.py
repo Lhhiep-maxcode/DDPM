@@ -90,6 +90,6 @@ def override_config_infer(config, args):
     if args.task_name:
         config['infer_params']['task_name'] = args.task_name
     if args.video_name:
-        config['infer_params']['video_name'] = args.video
+        config['infer_params']['video_name'] = args.video_name
         
     return config
