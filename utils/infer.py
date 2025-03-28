@@ -86,9 +86,7 @@ def sample(model, scheduler, diffusion_config, model_config, infer_config):
     
     # create video
     make_vid_from_images(sample_dir_prevstep, os.path.join(infer_config['task_name'], infer_config['video_name']))
-    make_vid_from_images(sample_dir_0, os.path.join(infer_config['task_name'], infer_config['video_name'], '_0'))
-    print("Video denoising gradually previous timestep saved:", os.path.join(infer_config['task_name'], infer_config['video_name']))
-    print("Video denoising directly timestep 0 saved:", os.path.join(infer_config['task_name'], infer_config['video_name'], '_0'))
+    make_vid_from_images(sample_dir_0, os.path.join(infer_config['task_name'], f"{infer_config['video_name']}_0"))
 
 
 def infer(args):
