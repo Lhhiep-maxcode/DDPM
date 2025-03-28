@@ -68,4 +68,4 @@ class LinearNoiseScheduler:
         variance = beta * (1 - self.cumulative_alphas[timestep - 1].view(batch_size, 1, 1, 1)) / (1 - self.cumulative_alphas[timestep].view(batch_size, 1, 1, 1))
         std = torch.sqrt(variance)
         z = torch.randn(xt.shape, device=xt.device)
-        return mean + std * z * (timestep > 1).int()
+        return mean + std * z * (timestep > 1).int().unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
