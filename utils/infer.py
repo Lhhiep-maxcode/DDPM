@@ -71,7 +71,7 @@ def infer(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Arguments for ddpm image generation')
     parser.add_argument('--config', dest='config_path',
-                        default='config/default.yaml', type=str)
+                        default='config/config.yaml', type=str)
      # params for diffusion
     parser.add_argument("--num_timesteps", dest='num_timesteps', type=int, help="Number of timesteps for diffusion")
     parser.add_argument("--beta_start", dest='beta_start', type=float, help="Beta start for diffusion")
