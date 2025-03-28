@@ -30,10 +30,3 @@ train_params:
   saved_ckpt_name: 'ddpm_ckpt.pth'
   load_ckpt_path: 'ddpm_ckpt.pth'
   save_every: 5
-
-infer_params:
-  task_name: 'default'
-  num_samples : 100
-  load_ckpt_path: 'ddpm_ckpt.pth'
-  num_grid_rows : 10
-  video_name : 'ddpm_video.mp4'

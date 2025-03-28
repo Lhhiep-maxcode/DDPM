@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 from model.unet import Unet
 from torch.optim import Adam
 import torchvision.transforms as transforms
-from utils.override_args import override_config
+from utils.override_args import override_config_train
 
 
 def train(args):
@@ -21,7 +21,7 @@ def train(args):
         except yaml.YAMLError as exc:
             print(exc)
     
-    config = override_config(config, args, True)
+    config = override_config_train(config, args)
     print(config)
     ########################################
 
@@ -100,8 +100,8 @@ def train(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Arguments for ddpm training")
-    parser.add_argument("--config", dest='config_path', type=str, default="config/config.yaml", 
-                        help="Path to config file (default: config/config.yaml)")
+    parser.add_argument("--config", dest='config_path', type=str, default="config/config_train.yaml", 
+                        help="Path to config file (default: config/config_train.yaml)")
     # params for dataset
     parser.add_argument("--root_dir", dest='root_dir', type=str, help="Root directory of dataset")
     parser.add_argument("--train_dir", dest='train_dir', type=str, help="Training directory of dataset")

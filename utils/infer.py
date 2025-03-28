@@ -7,7 +7,7 @@ from torchvision.utils import make_grid
 from tqdm import tqdm
 from model.unet import Unet
 from scheduler.linear_scheduler import LinearNoiseScheduler
-from utils.override_args import override_config
+from utils.override_args import override_config_infer
 from utils.make_vid_from_images import make_vid_from_images
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -49,7 +49,7 @@ def infer(args):
         except yaml.YAMLError as exc:
             print(exc)
 
-    config = override_config(config, args)
+    config = override_config_infer(config, args)
     print(config)
     ###############################################
 
@@ -73,8 +73,8 @@ def infer(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Arguments for ddpm image generation')
-    parser.add_argument('--config', dest='config_path',
-                        default='config/config.yaml', type=str)
+    parser.add_argument('--config', dest='config_path', default='config/config_infer.yaml', type=str, 
+                        help="Path to config file (default: config/config_train.yaml)")
      # params for diffusion
     parser.add_argument("--num_timesteps", dest='num_timesteps', type=int, help="Number of timesteps for diffusion")
     parser.add_argument("--beta_start", dest='beta_start', type=float, help="Beta start for diffusion")
