@@ -26,8 +26,8 @@ def sample(model, scheduler, diffusion_config, model_config, infer_config):
         xt = scheduler.reverse(xt, pred_noise, timestep)
 
         # denormalize
-        mean = torch.tensor([0.5, 0.5, 0.5]).view(3, 1, 1).to(device)
-        std = torch.tensor([0.5, 0.5, 0.5]).view(3, 1, 1).to(device)
+        mean = torch.tensor([0.5]).view(1, 1, 1).to(device)
+        std = torch.tensor([0.5]).view(1, 1, 1).to(device)
         images = xt * std + mean
         images = torch.clamp(images, 0, 1).cpu()
         # save result
@@ -35,7 +35,7 @@ def sample(model, scheduler, diffusion_config, model_config, infer_config):
         result = torchvision.transforms.ToPILImage()(grid)
         sample_dir = os.path.join(infer_config['task_name'], 'samples')
         os.makedirs(sample_dir, exist_ok=True)  # Creates the directory if it doesn't exist
-        result.save(os.path.join(infer_config['task_name'], 'samples', 'x{}.png'.format(i)))
+        result.save(os.path.join(infer_config['task_name'], 'samples', '{}.png'.format(i)))
         result.close()
 
 
