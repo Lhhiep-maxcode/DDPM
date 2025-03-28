@@ -2,10 +2,17 @@ import os
 import cv2
 import numpy as np
 import glob
+import re
+
+def natural_sort_key(s):
+    """Extracts numbers from filenames for natural sorting."""
+    for text in re.split(r'(\d+)', s):
+        if text.isdigit():
+            return int(text)
 
 def make_vid_from_images(image_folder, video_path):
     # Get image files in reverse order
-    images = sorted(glob.glob(os.path.join(image_folder, "*")), reverse=True)
+    images = sorted(glob.glob(os.path.join(image_folder, "*")), key=natural_sort_key, reverse=True)
 
     # Read first image to get size
     frame = cv2.imread(images[0])
