@@ -7,6 +7,8 @@ def override_config(config, args, train=False):
             config['dataset_params']['train'] = args.train_dir
         if args.test_dir:
             config['dataset_params']['test'] = args.test_dir
+        if args.val_dir:
+            config['dataset_params']['val'] = args.val_dir
 
     # override params for diffusion
     if args.num_timesteps:
@@ -23,6 +25,12 @@ def override_config(config, args, train=False):
         config['model_params']['im_size'] = args.im_size
     if args.time_emb_dim:
         config['model_params']['time_emb_dim'] = args.time_emb_dim
+    if args.num_down_layers:
+        config['model_params']['num_down_layers'] = args.num_down_layers
+    if args.num_up_layers:
+        config['model_params']['num_up_layers'] = args.num_up_layers
+    if args.num_mid_layers:
+        config['model_params']['num_mid_layers'] = args.num_mid_layers
     if args.num_heads:
         config['model_params']['num_heads'] = args.num_heads
     if args.dropout:

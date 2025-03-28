@@ -113,6 +113,9 @@ if __name__ == "__main__":
     parser.add_argument("--im_channels", dest='im_channels', type=int, help="Number of image channels")
     parser.add_argument("--im_size", dest='im_size', type=int, help="Size of image")
     parser.add_argument("--time_emb_dim", dest='time_emb_dim', type=int, help="Time embedding dimension")
+    parser.add_argument("--num_down_layers", dest='num_down_layers', type=int, help="Number of down layers in model")
+    parser.add_argument("--num_up_layers", dest='num_up_layers', type=int, help="Number of up layers in model")
+    parser.add_argument("--num_mid_layers", dest='num_mid_layers', type=int, help="Number of middle layers in model")
     parser.add_argument("--num_heads", dest='num_heads', type=int, help="Number of attention heads")
     parser.add_argument("--dropout", dest='dropout', type=float, help="Dropout rate for model")
     # params for training
