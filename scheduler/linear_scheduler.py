@@ -60,6 +60,7 @@ class LinearNoiseScheduler:
         if isinstance(timestep, int):
             timestep = torch.tensor([timestep] * batch_size, device=xt.device)
 
+        x0 = (xt - self.sqrt_one_minus_cumulative_alphas.to(xt.device)[timestep].view(batch_size, 1, 1, 1) * noise_pred) / self.sqrt_cumulative_alphas.to(xt.device)[timestep].view(batch_size, 1, 1, 1)
         sqrt_alpha = torch.sqrt(self.alphas[timestep]).view(batch_size, 1, 1, 1)
         beta = self.betas[timestep].view(batch_size, 1, 1, 1)
         sqrt_one_minus_cumulative_alpha = self.sqrt_one_minus_cumulative_alphas[timestep].view(batch_size, 1, 1, 1)
@@ -68,4 +69,5 @@ class LinearNoiseScheduler:
         variance = beta * (1 - self.cumulative_alphas[timestep - 1].view(batch_size, 1, 1, 1)) / (1 - self.cumulative_alphas[timestep].view(batch_size, 1, 1, 1))
         std = torch.sqrt(variance)
         z = torch.randn(xt.shape, device=xt.device)
-        return mean + std * z * (timestep > 1).int().unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
+        # return x_{t-1}, x0
+        return mean + std * z * (timestep > 1).int().unsqueeze(-1).unsqueeze(-1).unsqueeze(-1), x0
