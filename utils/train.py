@@ -61,6 +61,8 @@ def train(args):
         print("Loading checkpoint model")
         model.load_state_dict(torch.load(train_config['load_ckpt_path'], weights_only=True))
 
+    print("Total model params: ", sum(p.numel() for p in model.parameters() if p.requires_grad))
+
     # define hyperparams and optimizer for training
     num_epochs = train_config['num_epochs']
     optimizer = Adam(model.parameters(), lr=train_config['lr'])
