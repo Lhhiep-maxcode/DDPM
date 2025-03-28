@@ -8,7 +8,7 @@ from tqdm import tqdm
 from model.unet import Unet
 from scheduler.linear_scheduler import LinearNoiseScheduler
 from utils.override_args import override_config
-from make_vid_from_images import make_vid_from_images
+from utils.make_vid_from_images import make_vid_from_images
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
