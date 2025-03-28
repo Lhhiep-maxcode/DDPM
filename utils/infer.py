@@ -12,36 +12,6 @@ from utils.make_vid_from_images import make_vid_from_images
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-# def sample(model, scheduler, diffusion_config, model_config, infer_config):
-#     """
-#     Sample stepwise by going backward one timestep at a time.
-#     """
-#     xt = torch.randn((infer_config['num_samples'], model_config['im_channels'], 
-#                          model_config['im_size'], model_config['im_size'])).to(device)
-#     model = model.to(device)
-#     for i in tqdm(reversed(range(diffusion_config['num_timesteps'])), total=diffusion_config['num_timesteps']):
-#         # get model prediction
-#         timestep = torch.as_tensor(i).unsqueeze(0).expand(infer_config['num_samples']).to(device)
-#         pred_noise = model(xt, timestep)
-#         # reverse to timestep t-1
-#         xt = scheduler.reverse(xt, pred_noise, timestep)
-
-#         # denormalize
-#         mean = torch.tensor([0.5]).view(1, 1, 1).to(device)
-#         std = torch.tensor([0.5]).view(1, 1, 1).to(device)
-#         images = xt * std + mean
-#         images = torch.clamp(images, 0, 1).cpu()
-#         # save result
-#         grid = make_grid(images, nrow=infer_config['num_grid_rows'])
-#         result = torchvision.transforms.ToPILImage()(grid)
-#         sample_dir = os.path.join(infer_config['task_name'], 'samples')
-#         os.makedirs(sample_dir, exist_ok=True)  # Creates the directory if it doesn't exist
-#         result.save(os.path.join(infer_config['task_name'], 'samples', '{}.png'.format(i)))
-#         result.close()
-    
-#     # create video
-#     make_vid_from_images(sample_dir, os.path.join(infer_config['task_name'], infer_config['video_name']))
-
 def sample(model, scheduler, diffusion_config, model_config, infer_config):
     """
     Sample stepwise by going backward one timestep at a time.
@@ -54,40 +24,23 @@ def sample(model, scheduler, diffusion_config, model_config, infer_config):
         timestep = torch.as_tensor(i).unsqueeze(0).expand(infer_config['num_samples']).to(device)
         pred_noise = model(xt, timestep)
         # reverse to timestep t-1
-        xt, x0 = scheduler.reverse(xt, pred_noise, timestep)
+        xt = scheduler.reverse(xt, pred_noise, timestep)
 
         # denormalize
         mean = torch.tensor([0.5]).view(1, 1, 1).to(device)
         std = torch.tensor([0.5]).view(1, 1, 1).to(device)
-        images_prevstep = xt * std + mean
-        images_0 = x0 * std + mean
-
-        images_prevstep = torch.clamp(images_prevstep, 0, 1).cpu()
-        images_0 = torch.clamp(images_0, 0, 1).cpu()
-
+        images = xt * std + mean
+        images = torch.clamp(images, 0, 1).cpu()
         # save result
-        grid_prevstep = make_grid(images_prevstep, nrow=infer_config['num_grid_rows'])
-        grid_0 = make_grid(images_0, nrow=infer_config['num_grid_rows'])
-
-        result_prevstep = torchvision.transforms.ToPILImage()(grid_prevstep)
-        result_0 = torchvision.transforms.ToPILImage()(grid_0)
-
-        sample_dir_prevstep = os.path.join(infer_config['task_name'], 'samples')
-        sample_dir_0 = os.path.join(infer_config['task_name'], 'samples_0')
-
-        os.makedirs(sample_dir_prevstep, exist_ok=True)  # Creates the directory if it doesn't exist
-        os.makedirs(sample_dir_0, exist_ok=True)
-
-        result_prevstep.save(os.path.join(infer_config['task_name'], 'samples', '{}.png'.format(i)))
-        result_0.save(os.path.join(infer_config['task_name'], 'samples_0', '{}.png'.format(i)))
-
-        result_prevstep.close()
-        result_0.close()
+        grid = make_grid(images, nrow=infer_config['num_grid_rows'])
+        result = torchvision.transforms.ToPILImage()(grid)
+        sample_dir = os.path.join(infer_config['task_name'], 'samples')
+        os.makedirs(sample_dir, exist_ok=True)  # Creates the directory if it doesn't exist
+        result.save(os.path.join(infer_config['task_name'], 'samples', '{}.png'.format(i)))
+        result.close()
     
     # create video
-    make_vid_from_images(sample_dir_prevstep, os.path.join(infer_config['task_name'], infer_config['video_name']))
-    make_vid_from_images(sample_dir_0, os.path.join(infer_config['task_name'], f"{infer_config['video_name']}_0"))
-
+    make_vid_from_images(sample_dir, os.path.join(infer_config['task_name'], infer_config['video_name']))
 
 def infer(args):
     with open(args.config_path, 'r') as file:
