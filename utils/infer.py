@@ -24,7 +24,7 @@ def sample(model, scheduler, diffusion_config, model_config, infer_config):
         timestep = torch.as_tensor(i).unsqueeze(0).expand(infer_config['num_samples']).to(device)
         pred_noise = model(xt, timestep)
         # reverse to timestep t-1
-        xt = scheduler.reverse(xt, pred_noise, timestep)
+        xt, _ = scheduler.reverse(xt, pred_noise, timestep)
 
         # denormalize
         mean = torch.tensor([0.5]).view(1, 1, 1).to(device)
