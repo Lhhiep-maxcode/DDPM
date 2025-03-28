@@ -104,6 +104,7 @@ if __name__ == "__main__":
     parser.add_argument("--root_dir", dest='root_dir', type=str, help="Root directory of dataset")
     parser.add_argument("--train_dir", dest='train_dir', type=str, help="Training directory of dataset")
     parser.add_argument("--test_dir", dest='test_dir', type=str, help="Testing directory of dataset")
+    parser.add_argument("--val_dir", dest='val_dir', type=str, help="Validation directory of dataset")
     # params for diffusion
     parser.add_argument("--num_timesteps", dest='num_timesteps', type=int, help="Number of timesteps for diffusion")
     parser.add_argument("--beta_start", dest='beta_start', type=float, help="Beta start for diffusion")
