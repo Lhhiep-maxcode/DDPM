@@ -8,6 +8,7 @@ from tqdm import tqdm
 from model.unet import Unet
 from scheduler.linear_scheduler import LinearNoiseScheduler
 from utils.override_args import override_config
+from make_vid_from_images import make_vid_from_images
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -37,7 +38,9 @@ def sample(model, scheduler, diffusion_config, model_config, infer_config):
         os.makedirs(sample_dir, exist_ok=True)  # Creates the directory if it doesn't exist
         result.save(os.path.join(infer_config['task_name'], 'samples', '{}.png'.format(i)))
         result.close()
-
+    
+    # create video
+    make_vid_from_images(sample_dir, os.path.join(infer_config['task_name'], infer_config['video_name']))
 
 
 def infer(args):
@@ -88,6 +91,6 @@ if __name__ == '__main__':
     parser.add_argument("--num_samples", dest='num_samples', type=int, help="Number of samples to generate")
     parser.add_argument("--load_ckpt_path", dest='load_ckpt_path', type=str, help="Path to load checkpoint")
     parser.add_argument("--num_grid_rows", dest='num_grid_rows', type=int, help="Number of grid rows for samples")
-
+    parser.add_argument("--video_name", dest='video_name', type=str, help="Name of the video file")
     args = parser.parse_args()
     infer(args)

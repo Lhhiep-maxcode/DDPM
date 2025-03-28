@@ -55,4 +55,6 @@ def override_config(config, args, train=False):
             config['infer_params']['load_ckpt_path'] = args.load_ckpt_path
         if args.task_name:
             config['infer_params']['task_name'] = args.task_name
+        if args.video_name:
+            config['infer_params']['video_name'] = args.video
     return config
