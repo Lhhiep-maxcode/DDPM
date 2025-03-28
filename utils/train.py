@@ -42,9 +42,9 @@ def train(args):
     ])
 
     dataset = CustomDataset(root_dir=dataset_config['root'],
-                                 train_dir=dataset_config['train'],
-                                 test_dir=dataset_config['test'],
-                                 transform=transform)
+                            train_dir=dataset_config['train'],
+                            test_dir=dataset_config['test'],
+                            transform=transform)
     dataloader = DataLoader(dataset=dataset, batch_size=train_config['batch_size'], 
                             shuffle=True, num_workers=4)
     

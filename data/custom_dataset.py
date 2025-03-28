@@ -4,7 +4,7 @@ from torch.utils.data import Dataset
 from PIL import Image
 
 class CustomDataset(Dataset):
-    def __init__(self, root_path, train_dir, test_dir, val_dir, transform=None):
+    def __init__(self, root_path, train_dir=None, test_dir=None, val_dir=None, transform=None):
         self.root_path = root_path
         self.transform = transform
 
