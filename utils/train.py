@@ -41,10 +41,11 @@ def train(args):
         transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])  # Normalize [-1, 1]
     ])
 
-    dataset = CustomDataset(root_dir=dataset_config['root'],
+    dataset = CustomDataset(root_path=dataset_config['root'],
                             train_dir=dataset_config['train'],
                             test_dir=dataset_config['test'],
                             transform=transform)
+    
     dataloader = DataLoader(dataset=dataset, batch_size=train_config['batch_size'], 
                             shuffle=True, num_workers=4)
     
