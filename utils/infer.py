@@ -19,9 +19,9 @@ def sample(model, scheduler, diffusion_config, model_config, infer_config):
     xt = torch.randn((infer_config['num_samples'], model_config['im_channels'], 
                          model_config['im_size'], model_config['im_size'])).to(device)
     model = model.to(device)
-    for i in tqdm(reversed(range(-diffusion_config['num_timesteps'], diffusion_config['num_timesteps'])), total=(diffusion_config['num_timesteps'] * 2)):
+    for i in tqdm(reversed(range(diffusion_config['num_timesteps'])), total=(diffusion_config['num_timesteps'])):
         # get model prediction
-        timestep = torch.as_tensor(max(i, 0)).unsqueeze(0).expand(infer_config['num_samples']).to(device)
+        timestep = torch.as_tensor(i).unsqueeze(0).expand(infer_config['num_samples']).to(device)
         pred_noise = model(xt, timestep)
         # reverse to timestep t-1
         xt, _ = scheduler.reverse(xt, pred_noise, timestep)
